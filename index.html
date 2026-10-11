@@ -33,7 +33,7 @@
         .branch-menu{margin-top:.75rem;display:flex;align-items:center;justify-content:center;gap:.5rem;width:100%;font-family:inherit;font-weight:800;font-size:.85rem;padding:.62rem;border-radius:.8rem;background:rgba(245,158,11,.12);color:#f59e0b;text-decoration:none;cursor:pointer;border:1px solid rgba(245,158,11,.25);transition:background-color .3s,color .3s,border-color .3s}
         .branch-menu:hover{background:#f59e0b;color:#0f172a;border-color:#f59e0b}
         .branch-menu svg{width:1rem;height:1rem;flex:0 0 auto}
-        .menu-tip{position:fixed;z-index:120;max-width:min(300px,calc(100vw - 24px));padding:9px 14px;border-radius:12px;font-family:inherit;font-weight:700;font-size:12.5px;line-height:1.55;color:#fde68a;background:rgba(17,24,39,.96);border:1px solid rgba(245,158,11,.4);box-shadow:0 14px 34px -12px rgba(0,0,0,.6);backdrop-filter:blur(12px) saturate(1.25);-webkit-backdrop-filter:blur(12px) saturate(1.25);opacity:0;transform:translateY(6px);transition:opacity .22s cubic-bezier(.2,.8,.3,1),transform .22s cubic-bezier(.2,.8,.3,1);pointer-events:none;text-align:center}
+        .menu-tip{position:absolute;z-index:120;max-width:min(300px,calc(100vw - 24px));padding:9px 14px;border-radius:12px;font-family:inherit;font-weight:700;font-size:12.5px;line-height:1.55;color:#fde68a;background:rgba(17,24,39,.96);border:1px solid rgba(245,158,11,.4);box-shadow:0 14px 34px -12px rgba(0,0,0,.6);backdrop-filter:blur(12px) saturate(1.25);-webkit-backdrop-filter:blur(12px) saturate(1.25);opacity:0;transform:translateY(6px);transition:opacity .22s cubic-bezier(.2,.8,.3,1),transform .22s cubic-bezier(.2,.8,.3,1);pointer-events:none;text-align:center}
         .menu-tip.show{opacity:1;transform:translateY(0)}
         .menu-tip::after{content:"";position:absolute;left:50%;bottom:-4.5px;width:9px;height:9px;transform:translateX(-50%) rotate(45deg);background:rgba(17,24,39,.96);border-right:1px solid rgba(245,158,11,.4);border-bottom:1px solid rgba(245,158,11,.4)}
         .menu-tip.below::after{bottom:auto;top:-4.5px;border:none;border-left:1px solid rgba(245,158,11,.4);border-top:1px solid rgba(245,158,11,.4)}
@@ -525,17 +525,24 @@
             var tip = document.createElement('div');
             tip.className = 'menu-tip';
             tip.textContent = msg;
-            document.body.appendChild(tip);
-            var tw = tip.offsetWidth, th = tip.offsetHeight;
+            var host = document.body, anchored = false;
             if (anchor && anchor.getBoundingClientRect) {
-                var r = anchor.getBoundingClientRect();
-                var left = Math.max(10, Math.min(r.left + r.width / 2 - tw / 2, window.innerWidth - tw - 10));
-                var top = r.top - th - 9;
-                if (top < 8) { top = r.bottom + 9; tip.classList.add('below'); }
+                host = anchor.closest('.branch-card') || anchor.parentElement || document.body;
+                if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
+                anchored = host !== document.body;
+            }
+            host.appendChild(tip);
+            var tw = tip.offsetWidth, th = tip.offsetHeight;
+            if (anchored) {
+                var ar = anchor.getBoundingClientRect(), hr = host.getBoundingClientRect();
+                var left = Math.max(8, Math.min(ar.left - hr.left + ar.width / 2 - tw / 2, host.clientWidth - tw - 8));
+                var top = ar.top - hr.top - th - 6;
+                if (top < 4) { top = ar.bottom - hr.top + 6; tip.classList.add('below'); }
                 tip.style.left = left + 'px';
                 tip.style.top = top + 'px';
             } else {
                 tip.classList.add('floating');
+                tip.style.position = 'fixed';
                 tip.style.left = ((window.innerWidth - tw) / 2) + 'px';
                 tip.style.top = (window.innerHeight - th - 26) + 'px';
             }
